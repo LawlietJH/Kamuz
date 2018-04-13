@@ -10,7 +10,7 @@
 #          ██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝███████╗
 #          ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
 #                                                         By: LawlietJH
-#                                                               v1.0.4
+#                                                               v1.0.5
 
 
 import msvcrt
@@ -30,7 +30,7 @@ Banner = """
                   ██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝███████╗
                   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
                                                          By: LawlietJH
-                                                               v1.0.4\
+                                                               v1.0.5\
 """
 
 Tk().withdraw()
@@ -277,6 +277,13 @@ def FuerzaBruta(Usuario):
 	Words = []
 	Actual = 1
 	
+	try: ChangePasswordUser('', '', Usuario)
+	except pywintypes.error as error:
+			
+			Err = error.__str__().replace('(','').replace(')','').replace('\'','').split(', ')[0]
+			if int(Err) == 5: return False
+	
+	
 	sys.stdout.write('\n\n [+] Abriendo Diccionario!')
 	
 	while True:
@@ -379,14 +386,17 @@ def Main():
 
 if __name__ == '__main__':
 	
+	import ctypes
+	if ctypes.windll.shell32.IsUserAnAdmin(): print('\n\n\t Ejecutame Sin Permisos de Administrador...\n'); sys.exit(0)
+	
 	while True: Main()
 	
 	# Cambiando La Contraseña De Usuario Para Pruebas:
 	# ~ try:
 		
-		# ~ Usuario = 'EnyLaine'
-		# ~ ActPass = '99'
-		# ~ NewPass = '12'
+		# ~ Usuario = 'Prueba'
+		# ~ ActPass = '12'
+		# ~ NewPass = 'xD'
 		
 		# ~ ChangePasswordUser(ActPass, NewPass, Usuario)
 		
