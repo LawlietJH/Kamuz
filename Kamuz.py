@@ -10,14 +10,18 @@
 #          ██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝███████╗
 #          ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
 #                                                         By: LawlietJH
-#                                                               v1.0.2
+#                                                               v1.0.3
 
 
 import msvcrt
 import os, sys, time
 import win32net as WN
 import pywintypes
+from tkinter import filedialog, Tk
 
+
+
+Tk().withdraw()
 
 Banner = """
 
@@ -28,12 +32,23 @@ Banner = """
                   ██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝███████╗
                   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
                                                          By: LawlietJH
-                                                               v1.0.2
+                                                               v1.0.3
 """
 
 #=======================================================================
 #=======================================================================
 #=======================================================================
+
+
+def GetFileName():
+	
+	Nombre = filedialog.askopenfile(initialdir = os.getcwd(),
+									title = "Selecciona Un Diccionario",
+									filetypes = (("Archivos de Texto","*.txt"),))
+	
+	if Nombre == None: return
+	
+	return Nombre.name
 
 
 def Progreso(x, Total, Palabra):	# Imprime Una Barra De Progreso.
@@ -208,22 +223,29 @@ def InformacionDeUsuarios():
 			
 			Cont += 1
 		
-		try: Opc = int(GetChar('\n\n [+] Escoge Un Usuario Para Atacar: '))
-		except:
+		try:
 			
-			if Opc == 0:
-				# ~ print('\n\n\t [!] Saliendo...!')
+			Opc = GetChar('\n\n [+] Escoge Un Usuario Para Atacar: ')
+			Opc = int(Opc)
+		
+		except ValueError:
+			
+			if Opc == b'\x03':
 				time.sleep(2)
 				sys.exit(1)
+			else:
 				
-			print('\n\n\t\t Elige una Opción Valida.\n\n')
-			os.system('Pause > Nul & Cls')
+				print('\n\n\t\t Elige una Opción Valida.\n\n')
+				time.sleep(2)
+			
+			os.system('Cls')
 			continue
 			
 		if Opc > len(Users) or Opc <= 0:
 			
 			print('\n\n\t\t Elige una Opción Valida.\n\n')
-			os.system('Pause > Nul & Cls')
+			time.sleep(2)
+			os.system('Cls')
 			continue
 		
 		break
@@ -253,7 +275,26 @@ def FuerzaBruta(Usuario):
 	
 	sys.stdout.write('\n\n\t [+] Abriendo Diccionario!')
 	
-	with open('Diccionario.txt','r') as File: Words = File.readlines()
+	while True:
+		
+		Diccio = GetFileName()
+		
+		if Diccio == None:
+			
+			print('\n\n\t No Elegiste Ningun Archivo')
+			os.system('Pause > Nul')
+			return
+	
+		try: open(Diccio,'r')
+		except:
+			
+			print('\n\n\t No se pudo Abrir el Archivo .txt')
+			time.sleep(2)
+			continue
+		
+		break
+	
+	with open(Diccio,'r') as File: Words = File.readlines()
 	Total = len(Words)
 	
 	sys.stdout.write('\r\t [+] Comenzando el Ataque!\n\n')
