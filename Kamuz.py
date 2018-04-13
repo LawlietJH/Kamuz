@@ -10,7 +10,7 @@
 #          ██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝███████╗
 #          ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
 #                                                         By: LawlietJH
-#                                                               v1.0.1
+#                                                               v1.0.2
 
 
 import msvcrt
@@ -28,8 +28,7 @@ Banner = """
                   ██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝███████╗
                   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
                                                          By: LawlietJH
-                                                               v1.0.1
-
+                                                               v1.0.2
 """
 
 #=======================================================================
@@ -121,7 +120,8 @@ def GetChar(Cadena=''):		# Permite Capturar 1 Caracter Que se Escriba en Pantall
 	
 	print(Cadena, end='')
 	Resp = msvcrt.getch()
-	print(str(Resp).replace('b\'','').replace('\'',''))
+	if Resp == b'\x03': print('Saliendo...')
+	else: print(str(Resp).replace('b\'','').replace('\'',''))
 	
 	return Resp
 
@@ -194,8 +194,8 @@ def InformacionDeUsuarios():
 	while True:
 		
 		print(Banner)
-		
 		Cont = 1
+		Opc = 0
 		
 		print('\n [+] Lista de Usuarios Existentes:\n')
 		
@@ -211,10 +211,15 @@ def InformacionDeUsuarios():
 		try: Opc = int(GetChar('\n\n [+] Escoge Un Usuario Para Atacar: '))
 		except:
 			
+			if Opc == 0:
+				# ~ print('\n\n\t [!] Saliendo...!')
+				time.sleep(2)
+				sys.exit(1)
+				
 			print('\n\n\t\t Elige una Opción Valida.\n\n')
 			os.system('Pause > Nul & Cls')
 			continue
-		
+			
 		if Opc > len(Users) or Opc <= 0:
 			
 			print('\n\n\t\t Elige una Opción Valida.\n\n')
