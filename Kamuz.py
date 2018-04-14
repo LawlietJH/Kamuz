@@ -2,6 +2,7 @@
 # -*- coding: utf8 -*-
 
 # Python: 3
+# Windows
 #
 #          ██╗  ██╗ █████╗ ███╗   ███╗██╗   ██╗███████╗
 #          ██║ ██╔╝██╔══██╗████╗ ████║██║   ██║╚══███╔╝
@@ -10,14 +11,13 @@
 #          ██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝███████╗
 #          ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
 #                                                         By: LawlietJH
-#                                                               v1.0.5
+#                                                               v1.0.6
 
-
+from tkinter import filedialog, Tk
+import win32net as WN		# Requiere Instalar PyWin32, Ejecutar Comando desde la Terminal (CMD): python -m pip install pywin32
+import pywintypes			# Tambien Requiere PyWin32.
 import msvcrt
 import os, sys, time
-import win32net as WN
-import pywintypes
-from tkinter import filedialog, Tk
 
 
 
@@ -30,7 +30,7 @@ Banner = """
                   ██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝███████╗
                   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
                                                          By: LawlietJH
-                                                               v1.0.5\
+                                                               v1.0.6\
 """
 
 Tk().withdraw()
@@ -51,45 +51,45 @@ def GetFileName():
 	return Nombre.name
 
 
-def Progreso(x, Total, Palabra):	# Imprime Una Barra De Progreso.
+def Progreso(x, Total, Palabra, TI):	# Imprime Datos de Progreso.
 	
-	TamBar = 0
 	Progreso = (x * 100) / Total
-	Actual = x / Total
+	Transc = time.time() - TI
+	PorSeg = int(x / Transc)
 	
-	TiempoTransc = int(time.clock()) + 1
-	BarraAct = int(Actual * TamBar)
+	# ~ TamBar = 0
+	# ~ Actual = x / Total
+	# ~ TiempoTransc = int(time.clock()) + 1
+	# ~ BarraAct = int(Actual * TamBar)
 	
-	bar = '\r Progreso: {:.2f}%'.format(Progreso)
 	# ~ bar += ' |' + '█'.join(["" for _ in range(BarraAct)])  # Imprimir Progreso.
 	# ~ bar += ' '.join(['' for _ in range(int(TamBar - BarraAct))]) + '|'
-	bar += ' [' + Tiempo((Total - x) * (TiempoTransc / x))  + '] '	# Imprimir Tiempo Restante.
-	bar += '[{}/{}] - Probando: {}\t\t'.format(x, Total, Palabra)
 	
+	bar  = '\r [ {}/{} '.format(x, Total)
+	bar += '| {:.2f}% |'.format(Progreso)
+	bar += ' {}/seg |'.format(PorSeg)
+	bar += ' {} ]'.format(Tiempo(Transc))
+	bar += ' - Probando: {}'.format(Palabra)
+	
+	sys.stdout.write('\r\t\t\t\t\t\t\t\t\t\t\t\t')
 	try: sys.stdout.write(bar)
 	except UnicodeEncodeError: return False
 
 
-def Tiempo(sec):	# Imprime El Tiempo Restante.
+def Tiempo(Segs):	# Imprime El Tiempo Restante.
 	
-	if sec >= 31449600000:  # Convierte a Milenios
-		return "{:d} Milenio(s)".format(int(sec / 31449600000))
-	elif sec >= 3144960000:  # Convierte a Siglos
-		return "{:d} Siglo(s)".format(int(sec / 3144960000))
-	elif sec >= 314496000:  # Convierte a Decadas
-		return "{:d} Decada(s)".format(int(sec / 314496000))
-	elif sec >= 31449600:  # Convierte a Años
-		return "{:d} año(s)".format(int(sec / 31449600))
-	elif sec >= 604800:  # Convierte a Semanas
-		return "{:d} Semana(s)".format(int(sec / 604800))
-	elif sec >= 86400:  # Convierte a Dias
-		return "{:d} Dia(s)".format(int(sec / 86400))
-	elif sec >= 3600:  # Convierte a Horas
-		return "{:d} hora(s)".format(int(sec / 3600))
-	elif sec >= 60:  # Convierte a Minutos
-		return "{:d} minuto(s)".format(int(sec / 60))
-	else:            # Sin Conversión
-		return "{:d} segundo(s)".format(int(sec))
+	Mins = int(Segs // 60)
+	Hors = int(Segs // 3600)
+	Dias = int(Segs // 86400)
+	
+	if Dias == 0:
+		if Hors == 0:
+			if Mins == 0: Cadena = "{:d} segs".format( int(Segs%60) )
+			else: Cadena = "{:d}:{:d} mins".format( Mins%60, int(Segs%60) )
+		else: Cadena = "{:d}:{:d}:{:d} hors".format( Hors%24, Mins%60, int(Segs%60) )
+	else: Cadena = "{:d} {:d}:{:d}:{:d} dias".format( Dias, Hors%24, Mins%60, int(Segs%60) )
+	
+	return Cadena
 
 
 def Barra(Actual, Total, Pass):	# Función Que Controla La Velocidad Al Imprimir En Pantalla La Barra De Progreso.
@@ -307,8 +307,11 @@ def FuerzaBruta(Usuario):
 	
 	with open(Diccio,'r',errors='ignore') as File: Words = File.readlines()
 	Total = len(Words)
+	TI = time.time()
 	
-	sys.stdout.write('\r [+] Al Ataque!\t\t\t\n\n\n')
+	sys.stdout.write('\r [+] Al Ataque!\t\t\t\n\n')
+	
+	print(' Progreso:\n')
 	
 	for Passwd in Words:
 		
@@ -330,7 +333,7 @@ def FuerzaBruta(Usuario):
 			Err = error.__str__().replace('(','').replace(')','').replace('\'','').split(', ')[0]
 			
 			if int(Err) == 86:
-				if Progreso(Actual, Total, Passwd) == False:
+				if Progreso(Actual, Total, Passwd, TI) == False:
 					sys.stdout.write('\r [!] Los Archivos .'+ Diccio.split('.')[-1].upper() +' No Son Compatibles.\t\t\t\t\t\t\t')
 					os.system('Pause > Nul')
 					return
@@ -378,7 +381,7 @@ def Main():
 		os.system('Pause > Nul')
 		return
 	
-	print('\n\n\n Password del Usuario \'' + Usuario + '\': ' + PassWD)
+	print('\n\n\t\t [+] La Password del Usuario \'' + Usuario + '\' Es: ' + PassWD)
 	
 	os.system('Pause > Nul')
 
@@ -395,19 +398,19 @@ if __name__ == '__main__':
 	# ~ try:
 		
 		# ~ Usuario = 'Prueba'
-		# ~ ActPass = '12'
-		# ~ NewPass = 'xD'
+		# ~ ActPass = ''
+		# ~ NewPass = '12'
 		
 		# ~ ChangePasswordUser(ActPass, NewPass, Usuario)
 		
-		# ~ print('\n\n Password del Usuario \'' + Usuario + '\' Cambiada Por: ' + NewPass)
+		# ~ print('\n Password del Usuario \'' + Usuario + '\' Cambiada Por: ' + NewPass)
 	
 	# ~ except pywintypes.error as error:
 		
 		# ~ Err = error.__str__().replace('(','').replace(')','').replace('\'','').split(', ')[0]
 		
-		# ~ if int(Err) == 86: print('\n\n \'' + ActPass + '\' No es La Contraseña Actual del Usuario \'' + Usuario + '\'. (Código 86)')
-		# ~ if int(Err) == 5: print('\n\n El Usuario \'' + Usuario + '\' Nego El Acceso (Código 5).')
+		# ~ if int(Err) == 86: print('\n \'' + ActPass + '\' No es La Contraseña Actual del Usuario \'' + Usuario + '\'. (Código 86)')
+		# ~ if int(Err) == 5: print('\n El Usuario \'' + Usuario + '\' Nego El Acceso (Código 5).')
 
 
 # Datos Extras:
