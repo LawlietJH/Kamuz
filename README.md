@@ -1,6 +1,6 @@
 # Kamuz
-## Obten Contraseñas de Cualquier Usuario de Windows Mediante Ataques de Fuerza Bruta Veloz.
-### Versión Actual: v1.0.7
+## Obten Contraseñas de Cualquier Usuario de Windows Mediante Ataques de Fuerza Bruta Veloz y con Interfaz Gráfica.
+### Versión Actual: v1.1.0 (Con Interfaz Gráfica)
 - - -
 ### Python: 3 
 ### OS: Windows
