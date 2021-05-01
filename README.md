@@ -23,9 +23,11 @@
 ![attack_end_gui](imgs/all-passwords-gui.png "All Passwords GUI")
 
 
+
+
 ### Muestra de Ejecución para código en consola (Rama 'base'):
 
-Código solo para terminal: [Kamuz para Temrinal](https://github.com/LawlietJH/Kamuz/tree/base "Kamuz base, código base para consola.")
+Código solo para terminal: [Kamuz para Terminal](https://github.com/LawlietJH/Kamuz/tree/base "Kamuz base, código base para consola.")
 
 ![menu](imgs/menu.png "Menu")
 
