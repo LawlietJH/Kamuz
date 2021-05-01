@@ -6,6 +6,7 @@ __pycache__/
 # Otros:
 
 *.jpg
+.idea/
 
 # C extensions
 *.so
