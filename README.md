@@ -5,9 +5,10 @@
 ### Python: 3 
 ### OS: Windows
 - - -
-### Dependencias: PyWin32.
+### Dependencias: PyWin32 y PyQT5.
 
-  * __Se Puede Instalar Desde Una Terminal (CMD) Con el Comando: _python -m pip install pywin32___
+  * __Se Debe Instalar Desde Una Terminal (CMD) Con el Comando: _python -m pip install -r requirements.txt___
+  * __Esto con la finalidad de instalar las versiónes de los módulos usadas durante el desarrollo.__
 
 ### Probado en Python 3.8.8
 
