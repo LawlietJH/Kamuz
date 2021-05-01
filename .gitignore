@@ -6,6 +6,10 @@ __pycache__/
 # Otros:
 
 *.jpg
+versions/
+wordlists/
+
+# PyCharm
 .idea/
 
 # C extensions
