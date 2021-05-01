@@ -20,6 +20,8 @@
 
 ![attack_end_gui](imgs/attack_end-gui.png "End GUI")
 
+![attack_end_gui](imgs/all-passwords-gui.png "All Passwords GUI")
+
 
 ### Muestra de Ejecución para código en consola (Rama 'base'):
 
