@@ -10,7 +10,7 @@
 #          ██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝███████╗
 #          ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
 #                                                         By: LawlietJH
-#                                                               v1.1.0
+#                                                               v1.1.1
 #=======================================================================
 
 import datetime
@@ -49,7 +49,7 @@ from PyQt5.QtGui import QIcon, QPixmap
 #=======================================================================
 __author__  = 'LawlietJH'				# Desarrollador
 __title__   = 'Kamuz'					# Nombre
-__version__ = 'v1.1.0'					# Versión
+__version__ = 'v1.1.1'					# Versión
 #=======================================================================
 #=======================================================================
 #=======================================================================
@@ -68,14 +68,17 @@ class Window(QMainWindow):
 	
 	class progressBarThread(QThread):
 		
-		updateProgress = pyqtSignal(str, int, bool)
+		updateProgress = pyqtSignal(str, int, bool, str)
 		
-		def __init__(self, user, wordlist):
+		def __init__(self, user, wordlist, typeAttack='wordlist'):
 			super().__init__()
 			
+			self.typeAttack = typeAttack
 			self.cancelAttack = False
 			self.wordlist = wordlist
+			self.isCorrectPwd = True
 			self.user = user
+			self.pos = 0
 			self.time_init = time.time()
 
 		def validateUserPassword(self, userName, passwd):
@@ -99,7 +102,60 @@ class Window(QMainWindow):
 					else:
 						return
 		
-		def run(self):
+		def yield_read(self, yield_, action):
+			for y in yield_:
+				if type(y).__name__ == 'generator':
+					if self.yield_read(y, action):
+						return True
+				else:
+					# ~ print('\r', y, end='')
+					if action(y):
+						return True
+		
+		def variableLengthWords(self, charset, length=1, invert=False, string=''):
+			
+			for char in charset:
+				
+				if invert:
+					word = char+string
+				else:
+					word = string+char
+				
+				yield word
+				
+				if not len(word) == length:
+					
+					yield self.variableLengthWords(charset, length, invert, word)
+		
+		def generatorAttack(self):
+			
+			def attack(word):
+				
+				import time
+				
+				self.pos += 1
+				
+				self.isCorrectPwd = self.validateUserPassword(self.user['name'], word)
+				
+				if self.pos % random.randint(150, 160) == 0:
+					self.updateProgress.emit(word, self.pos, False, 'generator')
+				if self.isCorrectPwd:
+					self.updateProgress.emit(word, self.pos, True,  'generator')
+				
+				return self.isCorrectPwd
+			
+			charset = 'zZ'
+			length  = 20
+			
+			self.wordsTotal = 0
+			for l in range(1, length+1):
+				total = len(charset) ** l
+				self.wordsTotal += total
+			
+			yield_data = self.variableLengthWords(charset, length)
+			self.yield_read(yield_data, attack)
+		
+		def wordlistAttack(self):
 			
 			wordlist_data = self.user['wordlists_data'].get(self.wordlist)
 			if wordlist_data and wordlist_data.get('wordsTotal'):
@@ -108,41 +164,41 @@ class Window(QMainWindow):
 				data_yield = self.openWordlistFile(self.wordlist)
 				self.wordsTotal = 0
 				last_word = ''
-
+				
 				for x in data_yield:
-
+					
 					if self.cancelAttack:
-						self.updateProgress.emit('', self.wordsTotal, False)
+						self.updateProgress.emit('', self.wordsTotal, False, 'wordlist')
 						return
-
+					
 					x = last_word + x
 					x = x.split('\n')
-
+					
 					if x[-1]:
 						last_word = x.pop()
 					else:
 						last_word = ''
-
+					
 					self.wordsTotal += len(x)
-					self.updateProgress.emit('', self.wordsTotal, False)
-
+					self.updateProgress.emit('', self.wordsTotal, False, 'wordlist')
+				
 				del x
-
+			
 			data_yield = self.openWordlistFile(self.wordlist)
-			pos = 0
+			self.pos = 0
 			last_word = ''
 			isCorrectPwd = False
 			time.sleep(.01)
-
+			
 			self.time_init = time.time()
 			if wordlist_data and wordlist_data.get('lastWord'):
 				self.time_init -= wordlist_data['currentTime']-.03
 				#print(wordlist_data['currentTime'])
-
+			
 			for data in data_yield:
-
+				
 				if self.cancelAttack: break
-
+				
 				data = last_word + data
 				data = data.split('\n')
 				last_word = data.pop()
@@ -150,31 +206,38 @@ class Window(QMainWindow):
 				for word in data:
 					
 					if self.cancelAttack: break
-					pos += 1
+					self.pos += 1
 					
-					if wordlist_data and wordlist_data.get('lastPos') and pos < wordlist_data.get('lastPos'):
-						# ~ if pos % random.randint(150, 160) == 0:
+					if wordlist_data and wordlist_data.get('lastPos') and self.pos < wordlist_data.get('lastPos'):
+						# ~ if self.pos % random.randint(150, 160) == 0:
 							# ~ print(wordlist_data.get('lastPos'))
 						continue
 					
 					isCorrectPwd = self.validateUserPassword(self.user['name'], word)
 					
-					if pos % random.randint(150, 160) == 0:
-						self.updateProgress.emit(word, pos, False)
+					if self.pos % random.randint(150, 160) == 0:
+						self.updateProgress.emit(word, self.pos, False, 'wordlist')
 					if isCorrectPwd:
-						self.updateProgress.emit(word, pos, True)
+						self.updateProgress.emit(word, self.pos, True, 'wordlist')
 						break
 				
 				if isCorrectPwd:
 					break
 			
-			#print(word, pos, last_word)
+			#print(word, self.pos, last_word)
 			
 			if not isCorrectPwd and not self.cancelAttack:
-				self.updateProgress.emit('No encontrada...'+word, pos, False)
+				self.updateProgress.emit('No encontrada...'+word, self.pos, False, 'wordlist')
 			else:
-				self.updateProgress.emit(word, pos, False)
-
+				self.updateProgress.emit(word, self.pos, False, 'wordlist')
+		
+		def run(self):
+			
+			if self.typeAttack == 'generator':
+				self.generatorAttack()
+			elif self.typeAttack == 'wordlist':
+				self.wordlistAttack()
+	
 	#===================================================================
 	# GUI
 	
@@ -268,14 +331,14 @@ class Window(QMainWindow):
 		
 		hbox2 = QHBoxLayout()
 		# ~ hbox2.addStretch(1)
-		hbox2.addWidget(self.labelBruteForceActualWord, alignment=Qt.AlignLeft)
+		hbox2.addWidget(self.labelBruteForceRemainingTime, alignment=Qt.AlignLeft)
 		hbox2.addWidget(self.labelBruteForceCurrentQty, alignment=Qt.AlignRight)
 		hbox2.addWidget(self.labelBruteForceWordsPerSecond, alignment=Qt.AlignCenter)
 		hbox2.addWidget(self.labelBruteForceCurrentTime, alignment=Qt.AlignLeft)
 		vbox2 = QVBoxLayout()
 		vbox2.addLayout(hbox2)
 		vbox2.addWidget(self.pbBruteForceProgress)
-		vbox2.addWidget(self.labelBruteForceRemainingTime, alignment=Qt.AlignLeft)
+		vbox2.addWidget(self.labelBruteForceActualWord, alignment=Qt.AlignLeft)
 		
 		###########
 		
@@ -415,43 +478,9 @@ class Window(QMainWindow):
 	#===================================================================
 	# Functions
 	
-	def progressBarUpdate(self, currentWord, currentPos, isCorrectPwd):
+	def progressBarUpdate(self, currentWord, currentPos, isCorrectPwd, typeAttack):
 		
-		if currentWord.startswith('No encontrada...'):
-			currentWord, tempWord = currentWord.split('...')
-			currentWord += '...'
-		
-		if not currentWord == '':
-			userID = self.usersInfo['ID'][self.labelUserSelected.text()]
-			currentUserInfo = self.usersInfo[userID]
-			# ~ if not currentUserInfo['wordlists_data'].get(self.wordlist):
-				# ~ currentUserInfo['wordlists_data'][self.wordlist] = {
-					# ~ 'lastWord':    currentWord if not currentWord == 'No encontrada...' else tempWord,
-					# ~ 'lastPos':     currentPos,
-					# ~ 'wordsTotal':  self.pbThread.wordsTotal,
-					# ~ 'currentTime': time.time() - self.pbThread.time_init,
-					# ~ 'lastWordIsPwd': isCorrectPwd
-				# ~ }
-			
-			tempy = len(self.usersInfo)-1
-			for t in range(tempy):
-				if not self.usersInfo[t]['wordlists_data'].get(self.wordlist):
-					self.usersInfo[t]['wordlists_data'][self.wordlist] = {
-						'wordsTotal':  self.pbThread.wordsTotal,
-					}
-			
-			if not currentWord == 'No encontrada...':
-				currentUserInfo['wordlists_data'][self.wordlist]['lastWord'] = currentWord
-			else:
-				currentUserInfo['wordlists_data'][self.wordlist]['lastWord'] = tempWord
-			
-			try:
-				currentUserInfo['wordlists_data'][self.wordlist]['currentTime'] = time.time() - self.pbThread.time_init
-			except:
-				pass
-			
-			currentUserInfo['wordlists_data'][self.wordlist]['lastPos'] = currentPos
-			currentUserInfo['wordlists_data'][self.wordlist]['lastWordIsPwd'] = isCorrectPwd
+		if typeAttack == 'generator':
 			
 			total = self.pbThread.wordsTotal
 			time_init = self.pbThread.time_init
@@ -476,30 +505,90 @@ class Window(QMainWindow):
 			
 			self.pbBruteForceProgress.setValue(int(progress))
 		
-		else:
-			total = -1
-			currentQty = '0/' + str(currentPos)
-			self.labelBruteForceActualWord.setText('Cargando Wordlist...')
-			self.labelBruteForceCurrentQty.setText(currentQty)
-		
-		if isCorrectPwd: #and not currentWord == 'No encontrada...':
-			self.bruteForceCancel()
-			self.tablewidgetUsers.setFocus()
-			# ~ self.tablewidgetUsers.selectRow(self.userSelectedPosition)
-			self.tablewidgetUsers.setCurrentCell(self.userSelectedPosition, 1)
-			# ~ if not currentWord == 'No encontrada...':
-			restTime = 'Tiempo restante: 00:00:00'
-			self.labelBruteForceRemainingTime.setText(restTime)
-			self.statusbar.showMessage('Contraseña encontrada: '+currentWord, 300000)
-			item = self.tablewidgetUsers.item(self.userSelectedPosition, 1)
-			item.setText(currentWord)
-			# ~ else:
-				# ~ self.statusbar.showMessage('Contraseña NO encontrada en este Wordlist.', 300000)
-		
-		elif currentPos == total or currentWord == 'No encontrada...':
+		elif typeAttack == 'wordlist':
 			
-			self.bruteForceCancel()
-			self.statusbar.showMessage('Contraseña NO encontrada en este Wordlist.', 300000)
+			if currentWord.startswith('No encontrada...'):
+				currentWord, tempWord = currentWord.split('...')
+				currentWord += '...'
+			
+			if not currentWord == '':
+				userID = self.usersInfo['ID'][self.labelUserSelected.text()]
+				currentUserInfo = self.usersInfo[userID]
+				# ~ if not currentUserInfo['wordlists_data'].get(self.wordlist):
+					# ~ currentUserInfo['wordlists_data'][self.wordlist] = {
+						# ~ 'lastWord':    currentWord if not currentWord == 'No encontrada...' else tempWord,
+						# ~ 'lastPos':     currentPos,
+						# ~ 'wordsTotal':  self.pbThread.wordsTotal,
+						# ~ 'currentTime': time.time() - self.pbThread.time_init,
+						# ~ 'lastWordIsPwd': isCorrectPwd
+					# ~ }
+				
+				tempy = len(self.usersInfo)-1
+				for t in range(tempy):
+					if not self.usersInfo[t]['wordlists_data'].get(self.wordlist):
+						self.usersInfo[t]['wordlists_data'][self.wordlist] = {
+							'wordsTotal':  self.pbThread.wordsTotal,
+						}
+				
+				if not currentWord == 'No encontrada...':
+					currentUserInfo['wordlists_data'][self.wordlist]['lastWord'] = currentWord
+				else:
+					currentUserInfo['wordlists_data'][self.wordlist]['lastWord'] = tempWord
+				
+				try:
+					currentUserInfo['wordlists_data'][self.wordlist]['currentTime'] = time.time() - self.pbThread.time_init
+				except:
+					pass
+				
+				currentUserInfo['wordlists_data'][self.wordlist]['lastPos'] = currentPos
+				if currentUserInfo['wordlists_data'][self.wordlist].get('lastWordIsPwd') in [None, False]:
+					currentUserInfo['wordlists_data'][self.wordlist]['lastWordIsPwd'] = isCorrectPwd
+				
+				total = self.pbThread.wordsTotal
+				time_init = self.pbThread.time_init
+				progress = (currentPos * 100) / total
+				currentT = time.time() - time_init
+				perSec = int(currentPos / currentT)
+				# ~ (Total - x) * (TiempoTransc / x)
+				restTime = (total - currentPos) * (currentT / currentPos)
+				
+				actualWord = 'Contraseña: ' if isCorrectPwd else 'Probando: '
+				actualWord += currentWord
+				currentQty = str(currentPos) + '/' + str(total)
+				wordsPerSecond = str(perSec)+'/s'
+				currentTime = self.prettyTime(currentT)
+				restTime = 'Tiempo restante: ' + self.prettyTime(restTime)
+				
+				self.labelBruteForceActualWord.setText(actualWord)
+				self.labelBruteForceCurrentQty.setText(currentQty)
+				self.labelBruteForceWordsPerSecond.setText(wordsPerSecond)
+				self.labelBruteForceCurrentTime.setText(currentTime)
+				self.labelBruteForceRemainingTime.setText(restTime)
+				
+				self.pbBruteForceProgress.setValue(int(progress))
+			
+			else:
+				total = -1
+				currentQty = '0/' + str(currentPos)
+				self.labelBruteForceActualWord.setText('Cargando Wordlist...')
+				self.labelBruteForceCurrentQty.setText(currentQty)
+			
+			if isCorrectPwd:
+				self.bruteForceCancel()
+				self.tablewidgetUsers.setFocus()
+				# ~ self.tablewidgetUsers.selectRow(self.userSelectedPosition)
+				self.tablewidgetUsers.setCurrentCell(self.userSelectedPosition, 1)
+				
+				restTime = 'Tiempo restante: 00:00:00'
+				self.labelBruteForceRemainingTime.setText(restTime)
+				self.statusbar.showMessage('Contraseña encontrada: '+currentWord, 300000)
+				item = self.tablewidgetUsers.item(self.userSelectedPosition, 1)
+				item.setText(currentWord)
+			
+			elif currentPos == total or currentWord == 'No encontrada...':
+				
+				self.bruteForceCancel()
+				self.statusbar.showMessage('Contraseña NO encontrada en este Wordlist.', 300000)
 	
 	def bruteForce(self):
 		
@@ -510,7 +599,7 @@ class Window(QMainWindow):
 			self.openWordList()
 			if not self.wordlist:
 				return
-
+		
 		self.btnOpenFile.setEnabled(False)
 		self.openAction.setEnabled(False)
 		self.btnBruteForce.setEnabled(False)
@@ -533,11 +622,14 @@ class Window(QMainWindow):
 			wordlists_data = self.usersInfo[userID]['wordlists_data'].get(self.wordlist)
 			if wordlists_data and wordlists_data.get('lastWord'):
 				self.btnBruteForce.setText('Continuar')
-
+		
 		self.pbThread.cancelAttack = True
 		self.btnOpenFile.setEnabled(True)
 		self.openAction.setEnabled(True)
-		self.btnBruteForce.setEnabled(True)
+		if wordlists_data:
+			self.btnBruteForce.setEnabled(not wordlists_data.get('lastWordIsPwd'))
+		else:
+			self.btnBruteForce.setEnabled(True)
 		self.btnBruteForce.setVisible(True)
 		self.btnBruteForceCancel.setEnabled(False)
 		self.btnBruteForceCancel.setVisible(False)
@@ -665,7 +757,15 @@ class Window(QMainWindow):
 			if not self.labelUserSelected.text() == user:
 				self.labelUserSelected.setText(user)
 				self.userSelectedPosition = item.row()
-				self.btnBruteForce.setEnabled(True)
+				if currentUserInfo:
+					wordlists_data = currentUserInfo['wordlists_data'].get(self.wordlist)
+					if wordlists_data:
+						print(wordlists_data)
+						self.btnBruteForce.setEnabled(not wordlists_data.get('lastWordIsPwd'))
+					else:
+						self.btnBruteForce.setEnabled(True)
+				else:
+					self.btnBruteForce.setEnabled(True)
 				self.statusbar.showMessage('Usuario seleccionado.', 3000)
 	
 	#===================================================================
